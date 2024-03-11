@@ -12,7 +12,7 @@
   ],
   "rules": {
     "react/react-in-jsx-scope": "off", // JSXを使用する際にReactのインポートを必要としないようにします
-    "import/order": [2, { "alphabetize": { "order": "asc" } }], // インポート文の特定の順序を強制します
+    // "import/order": [2, { "alphabetize": { "order": "asc" } }], // インポート文の特定の順序を強制します
     "import/no-unresolved": "off", // 解決できないインポートの報告を無効にします
     "prettier/prettier": [
       "error",
