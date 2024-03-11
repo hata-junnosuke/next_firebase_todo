@@ -21,10 +21,9 @@ const Register = () => {
     formState: { errors },
   } = useForm<Inputs>()
 
-  const onSubmit = async(data: Inputs) => {
+  const onSubmit = async (data: Inputs) => {
     await createUserWithEmailAndPassword(auth, data.email, data.password)
-      .then((userCredential) => {
-        const user = userCredential.user
+      .then(() => {
         router.push('/auth/login')
       })
       .catch((error) => {
@@ -49,20 +48,18 @@ const Register = () => {
             以下にメールアドレスを入力してください
           </p>
         </div>
-        <form 
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label className="text-pink-600 dark:text-pink-400" htmlFor="email">
               メールアドレス
             </Label>
             <Input
               {...register('email', {
-                required: "メールアドレスは必須です",
+                required: 'メールアドレスは必須です',
                 pattern: {
                   value:
                     /^[a-zA-Z0-9_.+-]+@([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.)+[a-zA-Z]{2,}$/,
-                  message: "不適切なメールアドレスです。",
+                  message: '不適切なメールアドレスです。',
                 },
               })}
               className="w-full"
@@ -84,16 +81,16 @@ const Register = () => {
                 パスワード
               </Label>
             </div>
-            <Input 
+            <Input
               {...register('password', {
-                required: "パスワードは必須です",
+                required: 'パスワードは必須です',
                 minLength: {
                   value: 6,
-                  message: "パスワードは6文字以上である必要があります"
-                }
+                  message: 'パスワードは6文字以上である必要があります',
+                },
               })}
               className="w-full"
-              type="password" 
+              type="password"
             />
             {errors.password && (
               <span className="text-sm text-red-500 dark:text-red-400">
@@ -116,7 +113,10 @@ const Register = () => {
         </form>
         <div className="text-center text-sm text-gray-500 dark:text-gray-400">
           アカウントをお持ちですか？
-          <Link className="underline text-pink-600 dark:text-pink-400" href="#">
+          <Link
+            className="underline text-pink-600 dark:text-pink-400"
+            href={'/auth/login'}
+          >
             ログイン
           </Link>
         </div>
