@@ -19,11 +19,15 @@ type Group = {
 
 const Sidebar = () => {
   // const { user, userId, setSelectedGroup, setSelectGroupName } = useAppContext()
-  const { user, userId } = useAppContext()
+  const { user, userId, setSelectedGroup } = useAppContext()
   const [groups, setGroups] = useState<Group[]>([])
 
   const handleLogout = () => {
     auth.signOut()
+  }
+
+  const selectGroup = (groupId: string) => {
+    setSelectedGroup(groupId)
   }
 
   useEffect(() => {
@@ -67,6 +71,7 @@ const Sidebar = () => {
             <li
               key={group.id}
               className="cursor-pointer border-b p-4 text-slate-100 hover:bg-slate-700 duration-150 "
+              onClick={() => selectGroup(group.id)}
             >
               {group.name}
             </li>

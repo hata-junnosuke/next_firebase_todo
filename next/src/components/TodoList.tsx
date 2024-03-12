@@ -3,13 +3,67 @@
  * @see https://v0.dev/t/J0ok6YkwQGe
  * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
  */
-import React from 'react'
+import { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
+import { db } from '../../firebase'
+import {
+  Timestamp,
+  collection,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+} from 'firebase/firestore'
+import { useAppContext } from '@/context/AppContext'
+
+type Todo = {
+  id: string
+  content: string
+  deadline: Timestamp
+  completed: boolean
+  createdAt: Timestamp
+  userId: string
+}
 
 const TodoList = () => {
+  const [todos, setTodos] = useState<Todo[]>([])
+  const { selectedGroup } = useAppContext()
+
+  useEffect(() => {
+    const fetchTodos = async () => {
+      if (selectedGroup) {
+        // 'groups'コレクション内の特定のドキュメントIDを持つドキュメント参照を取得
+        const groupDocRef = doc(db, 'groups', selectedGroup)
+        // 上記のドキュメント参照を使用して、'todos'サブコレクションへの参照を作成
+        const todoCollectionRef = collection(groupDocRef, 'todos')
+        const q = query(todoCollectionRef, orderBy('deadline'))
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+          const newTodos: Todo[] = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            content: doc.data().content,
+            deadline: doc.data().deadline,
+            completed: doc.data().completed,
+            createdAt: doc.data().createdAt,
+            userId: doc.data().userId,
+          }))
+          setTodos(newTodos)
+        })
+      }
+    }
+    fetchTodos()
+  }, [selectedGroup])
+
+  const handleToggle = async (id: string) => {
+    setTodos((todos) =>
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo,
+      ),
+    )
+  }
+
   return (
     <div>
       <h1 className="text-xl lg:text-2xl font-bold tracking-tight">
@@ -17,51 +71,30 @@ const TodoList = () => {
       </h1>
       <div className="bg-blue-100 rounded-lg dark:bg-blue-800 my-4">
         <ul className="divide-y divide-blue-200 dark:divide-blue-800">
-          <li className="flex items-center p-4 space-x-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox id="task-0" />
-              <label className="leading-none" htmlFor="task-0">
-                投稿者: User1 - Task 1
-              </label>
-              <span className="text-sm text-blue-500 dark:text-blue-400">
-                2024-03-15 期日
-              </span>
-            </div>
-            <Button className="ml-auto" size="icon" variant="outline">
-              <TrashIcon className="h-4 w-4" />
-              <span className="sr-only">削除</span>
-            </Button>
-          </li>
-          <li className="flex items-center p-4 space-x-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox id="task-1" />
-              <label className="leading-none" htmlFor="task-1">
-                投稿者: User2 - Task 2
-              </label>
-              <span className="text-sm text-blue-500 dark:text-blue-400">
-                2024-03-17 期日
-              </span>
-            </div>
-            <Button className="ml-auto" size="icon" variant="outline">
-              <TrashIcon className="h-4 w-4" />
-              <span className="sr-only">削除</span>
-            </Button>
-          </li>
-          <li className="flex items-center p-4 space-x-4 line-through">
-            <div className="flex items-center space-x-2">
-              <Checkbox checked id="task-2" />
-              <label className="leading-none" htmlFor="task-2">
-                投稿者: User3 - Task 3
-              </label>
-              <span className="text-sm text-blue-500 dark:text-blue-400">
-                2024-03-20 期日
-              </span>
-            </div>
-            <Button className="ml-auto" size="icon" variant="outline">
-              <TrashIcon className="h-4 w-4" />
-              <span className="sr-only">削除</span>
-            </Button>
-          </li>
+          {todos.map((todo) => (
+            <li key={todo.id} className="flex items-center p-4 space-x-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id={todo.id}
+                  checked={todo.completed}
+                  onChange={() => handleToggle(todo.id)}
+                />
+                <p
+                  className={`leading-none ${
+                    todo.completed ? 'line-through' : ''
+                  }`}
+                >
+                  {todo.content} 期限:
+                  {todo.deadline.toDate().toLocaleDateString()}
+                </p>
+              </div>
+              <Button className="ml-auto" size="icon" variant="outline">
+                <TrashIcon className="h-4 w-4" />
+                <span className="sr-only">削除</span>
+              </Button>
+            </li>
+          ))}
         </ul>
       </div>
       <div className="grid grid-cols-2 gap-4 items-center my-4">
