@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BiLogOut } from 'react-icons/bi'
-import { db } from '../../firebase'
+import { auth, db } from '../../firebase'
 import {
   Timestamp,
   collection,
@@ -8,6 +8,7 @@ import {
   orderBy,
   query,
 } from 'firebase/firestore'
+import { useAppContext } from '@/context/AppContext'
 
 type Group = {
   id: string
@@ -16,7 +17,13 @@ type Group = {
 }
 
 const Sidebar = () => {
+  // const { user, userId, setSelectedGroup, setSelectGroupName } = useAppContext()
+  const { user } = useAppContext()
   const [groups, setGroups] = useState<Group[]>([])
+
+  const handleLogout = () => {
+    auth.signOut()
+  }
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -57,13 +64,13 @@ const Sidebar = () => {
         </ul>
       </div>
 
-      {/* {user && (
+      {user && (
         <div className="mb-2 p-4 text-slate-100 text-lg font-medium">
           {user.email}
         </div>
-      )} */}
+      )}
       <div
-        // onClick={() => handleLogout()}
+        onClick={() => handleLogout()}
         className="text-lg flex items-center justify-evenly mb-2 cursor-pointer border p-4 text-slate-100 hover:bg-blue-800 duration-150"
       >
         <BiLogOut />
