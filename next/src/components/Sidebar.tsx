@@ -3,6 +3,7 @@ import { BiLogOut } from 'react-icons/bi'
 import { auth, db } from '../../firebase'
 import {
   Timestamp,
+  addDoc,
   collection,
   onSnapshot,
   orderBy,
@@ -18,7 +19,7 @@ type Group = {
 
 const Sidebar = () => {
   // const { user, userId, setSelectedGroup, setSelectGroupName } = useAppContext()
-  const { user } = useAppContext()
+  const { user, userId } = useAppContext()
   const [groups, setGroups] = useState<Group[]>([])
 
   const handleLogout = () => {
@@ -42,11 +43,20 @@ const Sidebar = () => {
     fetchGroups()
   }, [])
 
+  const addNewRoom = async () => {
+    const groupName = prompt('グループ名を入力してください。')
+    await addDoc(collection(db, 'groups'), {
+      name: groupName,
+      userId: userId,
+      createdAt: Timestamp.now(),
+    })
+  }
+
   return (
     <div className="bg-pink-600 text-white h-full overflow-y-auto px-5 flex flex-col">
       <div className="flex-grow">
         <div
-          // onClick={addNewRoom}
+          onClick={addNewRoom}
           className="cursor-pointer flex justify-evenly items-center border mt-2 rounded-md hover:bg-blue-800 duration-150"
         >
           <span className="text-white p-4 text-2xl">＋</span>
