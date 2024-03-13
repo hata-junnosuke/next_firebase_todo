@@ -12,6 +12,7 @@ import {
   Timestamp,
   addDoc,
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   orderBy,
@@ -19,6 +20,7 @@ import {
   serverTimestamp,
   updateDoc,
 } from 'firebase/firestore'
+import { FaTrashAlt } from 'react-icons/fa'
 import { useAppContext } from '@/context/AppContext'
 import { useForm } from 'react-hook-form'
 
@@ -97,6 +99,17 @@ const TodoList = () => {
     })
   }
 
+  const handleDelete = async (id: string) => {
+    const confirmDelete = confirm('このタスクを削除してよろしいですか？')
+    if (!confirmDelete) return
+    try {
+      await deleteDoc(doc(db, 'groups', selectedGroup, 'todos', id))
+      setTodos(todos.filter((todo) => todo.id !== id))
+    } catch (error) {
+      console.error('Error removing document: ', error)
+    }
+  }
+
   return (
     <div>
       <h1 className="text-xl lg:text-2xl font-bold tracking-tight">
@@ -122,72 +135,62 @@ const TodoList = () => {
                   {todo.deadline.toDate().toLocaleDateString()}
                 </p>
               </div>
-              <Button className="ml-auto" size="icon" variant="outline">
-                <TrashIcon className="h-4 w-4" />
+              <Button
+                onClick={() => handleDelete(todo.id)}
+                className="ml-auto"
+                size="icon"
+                variant="outline"
+              >
+                <FaTrashAlt />
                 <span className="sr-only">削除</span>
               </Button>
             </li>
           ))}
         </ul>
       </div>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-2 gap-4 items-center my-4">
-          <Input
-            {...register('content', { required: '内容を入力してください。' })}
-            id="task"
-            placeholder="タスク"
-          />
-          {errors.content && (
-            <span className="text-sm text-red-500 dark:text-red-400">
-              {errors.content.message}
-            </span>
-          )}
-          <div className="flex items-center gap-2">
-            <Label htmlFor="due-date">期日</Label>
+      {selectedGroup === null ? (
+        <p className="text-sm text-red-500 dark:text-red-400">
+          サイドバーからグループを選択してください。
+        </p>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="grid grid-cols-2 gap-4 items-center my-4">
             <Input
-              {...register('deadline', {
-                required: '期限を入力してください。',
-              })}
-              id="due-date"
-              type="date"
+              {...register('content', { required: '内容を入力してください。' })}
+              id="task"
+              placeholder="タスク"
             />
+            {errors.content && (
+              <span className="text-sm text-red-500 dark:text-red-400">
+                {errors.content.message}
+              </span>
+            )}
+            <div className="flex items-center gap-2">
+              <Label htmlFor="due-date">期日</Label>
+              <Input
+                {...register('deadline', {
+                  required: '期限を入力してください。',
+                })}
+                id="due-date"
+                type="date"
+              />
+            </div>
+            {errors.deadline && (
+              <span className="text-sm text-red-500 dark:text-red-400">
+                {errors.deadline.message}
+              </span>
+            )}
+            <Button
+              className="bg-pink-600 text-white dark:bg-pink-400 dark:text-gray-900 self-center text-sm"
+              type="submit"
+            >
+              追加
+            </Button>
           </div>
-          {errors.deadline && (
-            <span className="text-sm text-red-500 dark:text-red-400">
-              {errors.deadline.message}
-            </span>
-          )}
-          <Button
-            className="bg-pink-600 text-white dark:bg-pink-400 dark:text-gray-900 self-center text-sm"
-            type="submit"
-          >
-            追加
-          </Button>
-        </div>
-      </form>
+        </form>
+      )}
     </div>
   )
 }
 
 export default TodoList
-
-function TrashIcon(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 6h18" />
-      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-    </svg>
-  )
-}
