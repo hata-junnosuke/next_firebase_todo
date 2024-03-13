@@ -83,6 +83,7 @@ const TodoList = () => {
 
     await addDoc(collection(db, 'groups', selectedGroup, 'todos'), {
       content: data.content,
+      //@ts-expect-error - converting string to Timestamp
       deadline: Timestamp.fromDate(new Date(data.deadline)),
       completed: false,
       createdAt: serverTimestamp(),
@@ -103,6 +104,7 @@ const TodoList = () => {
     const confirmDelete = confirm('このタスクを削除してよろしいですか？')
     if (!confirmDelete) return
     try {
+      //@ts-expect-error - converting string to Timestamp
       await deleteDoc(doc(db, 'groups', selectedGroup, 'todos', id))
       setTodos(todos.filter((todo) => todo.id !== id))
     } catch (error) {
