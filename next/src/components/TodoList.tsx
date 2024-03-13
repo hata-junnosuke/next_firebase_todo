@@ -10,14 +10,17 @@ import { Button } from '@/components/ui/button'
 import { db } from '../../firebase'
 import {
   Timestamp,
+  addDoc,
   collection,
   doc,
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
   updateDoc,
 } from 'firebase/firestore'
 import { useAppContext } from '@/context/AppContext'
+import { useForm } from 'react-hook-form'
 
 type Todo = {
   id: string
@@ -28,9 +31,14 @@ type Todo = {
   userId: string
 }
 
+type Inputs = {
+  content: string
+  deadline: Timestamp
+}
+
 const TodoList = () => {
   const [todos, setTodos] = useState<Todo[]>([])
-  const { selectedGroup } = useAppContext()
+  const { userId, selectedGroup } = useAppContext()
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -46,16 +54,40 @@ const TodoList = () => {
             id: doc.id,
             content: doc.data().content,
             deadline: doc.data().deadline,
-            completed: doc.data().completed || false,
+            completed: doc.data().completed || false, // completedがundefinedの場合に備えてfalseをデフォルト値として設定
             createdAt: doc.data().createdAt,
             userId: doc.data().userId,
           }))
           setTodos(newTodos)
         })
+        // クリーンアップ関数を返すことで、コンポーネントがアンマウントされたときにunsubscribeする
+        return () => {
+          unsubscribe()
+        }
       }
     }
     fetchTodos()
   }, [selectedGroup])
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<Inputs>()
+
+  const onSubmit = async (data: Inputs) => {
+    if (!selectedGroup) return
+
+    await addDoc(collection(db, 'groups', selectedGroup, 'todos'), {
+      content: data.content,
+      deadline: Timestamp.fromDate(new Date(data.deadline)),
+      completed: false,
+      createdAt: serverTimestamp(),
+      userId: userId,
+    })
+    reset()
+  }
 
   const handleToggle = async (id: string, completed: boolean) => {
     if (!selectedGroup) return // グループが選択されていない場合は何もしない
@@ -98,19 +130,41 @@ const TodoList = () => {
           ))}
         </ul>
       </div>
-      <div className="grid grid-cols-2 gap-4 items-center my-4">
-        <Input id="task" placeholder="タスク" />
-        <div className="flex items-center gap-2">
-          <Label htmlFor="due-date">期日</Label>
-          <Input id="due-date" type="date" />
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="grid grid-cols-2 gap-4 items-center my-4">
+          <Input
+            {...register('content', { required: '内容を入力してください。' })}
+            id="task"
+            placeholder="タスク"
+          />
+          {errors.content && (
+            <span className="text-sm text-red-500 dark:text-red-400">
+              {errors.content.message}
+            </span>
+          )}
+          <div className="flex items-center gap-2">
+            <Label htmlFor="due-date">期日</Label>
+            <Input
+              {...register('deadline', {
+                required: '期限を入力してください。',
+              })}
+              id="due-date"
+              type="date"
+            />
+          </div>
+          {errors.deadline && (
+            <span className="text-sm text-red-500 dark:text-red-400">
+              {errors.deadline.message}
+            </span>
+          )}
+          <Button
+            className="bg-pink-600 text-white dark:bg-pink-400 dark:text-gray-900 self-center text-sm"
+            type="submit"
+          >
+            追加
+          </Button>
         </div>
-        <Button
-          className="bg-pink-600 text-white dark:bg-pink-400 dark:text-gray-900 self-center text-sm"
-          type="submit"
-        >
-          追加
-        </Button>
-      </div>
+      </form>
     </div>
   )
 }

@@ -43,6 +43,10 @@ const Sidebar = () => {
         }))
         setGroups(newGroups)
       })
+      // クリーンアップ関数を返すことで、コンポーネントがアンマウントされたときにunsubscribeする
+      return () => {
+        unsubscribe()
+      }
     }
     fetchGroups()
   }, [])
