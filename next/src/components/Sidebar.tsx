@@ -18,7 +18,6 @@ type Group = {
 }
 
 const Sidebar = () => {
-  // const { user, userId, setSelectedGroup, setSelectGroupName } = useAppContext()
   const { user, userId, setSelectedGroup } = useAppContext()
   const [groups, setGroups] = useState<Group[]>([])
 
