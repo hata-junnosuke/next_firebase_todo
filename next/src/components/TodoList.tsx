@@ -15,6 +15,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  updateDoc,
 } from 'firebase/firestore'
 import { useAppContext } from '@/context/AppContext'
 
@@ -45,7 +46,7 @@ const TodoList = () => {
             id: doc.id,
             content: doc.data().content,
             deadline: doc.data().deadline,
-            completed: doc.data().completed,
+            completed: doc.data().completed || false,
             createdAt: doc.data().createdAt,
             userId: doc.data().userId,
           }))
@@ -56,12 +57,12 @@ const TodoList = () => {
     fetchTodos()
   }, [selectedGroup])
 
-  const handleToggle = async (id: string) => {
-    setTodos((todos) =>
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo,
-      ),
-    )
+  const handleToggle = async (id: string, completed: boolean) => {
+    if (!selectedGroup) return // グループが選択されていない場合は何もしない
+    const todoDocRef = doc(db, 'groups', selectedGroup, 'todos', id)
+    await updateDoc(todoDocRef, {
+      completed: !completed,
+    })
   }
 
   return (
@@ -78,7 +79,7 @@ const TodoList = () => {
                   type="checkbox"
                   id={todo.id}
                   checked={todo.completed}
-                  onChange={() => handleToggle(todo.id)}
+                  onChange={() => handleToggle(todo.id, todo.completed)}
                 />
                 <p
                   className={`leading-none ${
