@@ -104,12 +104,6 @@ const Register = () => {
           >
             新規登録
           </Button>
-          <Button
-            className="w-full border border-pink-600 text-pink-600 dark:border-pink-400 dark:text-pink-400"
-            variant="outline"
-          >
-            Googleで新規登録
-          </Button>
         </form>
         <div className="text-center text-sm text-gray-500 dark:text-gray-400">
           アカウントをお持ちですか？
