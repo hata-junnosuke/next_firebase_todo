@@ -5,8 +5,14 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useForm } from 'react-hook-form'
 import { auth } from '../../../../firebase'
-import { signInWithEmailAndPassword } from 'firebase/auth'
+import {
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+  UserCredential,
+} from 'firebase/auth'
 import { useRouter } from 'next/navigation'
+import { FcGoogle } from 'react-icons/fc'
 
 type Inputs = {
   email: string
@@ -33,6 +39,21 @@ const Login = () => {
           alert(error.message)
         }
       })
+  }
+
+  const handleGoogleLogin = async () => {
+    try {
+      await googleLogin()
+      router.push('/')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      alert(error.message)
+    }
+  }
+
+  const googleLogin = (): Promise<UserCredential> => {
+    const provider = new GoogleAuthProvider()
+    return signInWithPopup(auth, provider)
   }
 
   return (
@@ -105,10 +126,12 @@ const Login = () => {
             ログイン
           </Button>
           <Button
+            onClick={handleGoogleLogin}
             className="w-full border border-pink-600 text-pink-600 dark:border-pink-400 dark:text-pink-400"
             variant="outline"
           >
-            Googleでログイン
+            <FcGoogle />
+            Googleで続ける
           </Button>
         </form>
         <div className="text-center text-sm text-gray-500 dark:text-gray-400">
