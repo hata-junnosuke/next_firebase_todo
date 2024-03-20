@@ -5,6 +5,9 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useForm } from 'react-hook-form'
 import { auth } from '../../../../firebase'
+import { useDispatch } from 'react-redux'
+import { login } from '@/features/user/UserSlice'
+
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
@@ -20,6 +23,7 @@ type Inputs = {
 }
 
 const Login = () => {
+  const dispatch = useDispatch()
   const router = useRouter()
   const {
     register,
@@ -29,7 +33,9 @@ const Login = () => {
 
   const onSubmit = async (data: Inputs) => {
     await signInWithEmailAndPassword(auth, data.email, data.password)
-      .then(() => {
+      .then((result) => {
+        const userInfo = result.user
+        dispatch(login(userInfo))
         router.push('/')
       })
       .catch((error) => {

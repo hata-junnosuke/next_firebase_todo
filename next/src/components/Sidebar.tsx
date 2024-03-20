@@ -10,6 +10,8 @@ import {
   query,
 } from 'firebase/firestore'
 import { useAppContext } from '@/context/AppContext'
+import { useSelector, useDispatch } from 'react-redux'
+import { useRouter } from 'next/navigation'
 
 type Group = {
   id: string
@@ -18,11 +20,18 @@ type Group = {
 }
 
 const Sidebar = () => {
-  const { user, userId, setSelectedGroup } = useAppContext()
+  const router = useRouter()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { user, userId } = useSelector((stote: any) => stote.user)
+  const dispatch = useDispatch()
+  // const { user, userId, setSelectedGroup } = useAppContext()
+  const { setSelectedGroup } = useAppContext()
   const [groups, setGroups] = useState<Group[]>([])
 
   const handleLogout = () => {
     auth.signOut()
+    dispatch({ type: 'user/logout' })
+    router.push('/auth/login')
   }
 
   const selectGroup = (groupId: string) => {
