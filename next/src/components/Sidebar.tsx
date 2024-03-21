@@ -9,7 +9,9 @@ import {
   orderBy,
   query,
 } from 'firebase/firestore'
-import { useAppContext } from '@/context/AppContext'
+import useStore from '../stores/useStore'
+import useAuthStore from '../stores/authStore'
+import useGroupStore from '../stores/groupStore'
 
 type Group = {
   id: string
@@ -18,15 +20,16 @@ type Group = {
 }
 
 const Sidebar = () => {
-  const { user, userId, setSelectedGroup } = useAppContext()
+  const userState = useStore(useAuthStore, (state) => state.user)
+  const user = userState ? userState : null // userがnullまたはundefinedの場合、nullを代入
   const [groups, setGroups] = useState<Group[]>([])
 
   const handleLogout = () => {
     auth.signOut()
   }
 
-  const selectGroup = (groupId: string) => {
-    setSelectedGroup(groupId)
+  const selectGroup = (group: Group) => {
+    useGroupStore.getState().setSelectedGroup(group)
   }
 
   useEffect(() => {
@@ -54,7 +57,7 @@ const Sidebar = () => {
     const groupName = prompt('グループ名を入力してください。')
     await addDoc(collection(db, 'groups'), {
       name: groupName,
-      userId: userId,
+      userId: user?.uid,
       createdAt: Timestamp.now(),
     })
   }
@@ -74,7 +77,7 @@ const Sidebar = () => {
             <li
               key={group.id}
               className="cursor-pointer border-b p-4 text-slate-100 hover:bg-slate-700 duration-150 "
-              onClick={() => selectGroup(group.id)}
+              onClick={() => selectGroup(group)}
             >
               {group.name}
             </li>

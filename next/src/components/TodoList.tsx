@@ -21,8 +21,10 @@ import {
   updateDoc,
 } from 'firebase/firestore'
 import { FaTrashAlt } from 'react-icons/fa'
-import { useAppContext } from '@/context/AppContext'
 import { useForm } from 'react-hook-form'
+import useStore from '@/stores/useStore'
+import useGroupStore from '@/stores/groupStore'
+import useAuthStore from '@/stores/authStore'
 
 type Todo = {
   id: string
@@ -40,13 +42,14 @@ type Inputs = {
 
 const TodoList = () => {
   const [todos, setTodos] = useState<Todo[]>([])
-  const { userId, selectedGroup } = useAppContext()
+  const selectedGroup = useStore(useGroupStore, (state) => state.selectedGroup)
+  const user = useStore(useAuthStore, (state) => state.user)
 
   useEffect(() => {
     const fetchTodos = async () => {
-      if (selectedGroup) {
+      if (user && selectedGroup) {
         // 'groups'コレクション内の特定のドキュメントIDを持つドキュメント参照を取得
-        const groupDocRef = doc(db, 'groups', selectedGroup)
+        const groupDocRef = doc(db, 'groups', selectedGroup.id)
         // 上記のドキュメント参照を使用して、'todos'サブコレクションへの参照を作成
         const todoCollectionRef = collection(groupDocRef, 'todos')
         const q = query(todoCollectionRef, orderBy('deadline'))
@@ -58,7 +61,7 @@ const TodoList = () => {
             deadline: doc.data().deadline,
             completed: doc.data().completed || false, // completedがundefinedの場合に備えてfalseをデフォルト値として設定
             createdAt: doc.data().createdAt,
-            userId: doc.data().userId,
+            userId: user.uid, // userがnullまたはundefinedの場合に備えて空文字をデフォルト値として設定
           }))
           setTodos(newTodos)
         })
@@ -69,7 +72,7 @@ const TodoList = () => {
       }
     }
     fetchTodos()
-  }, [selectedGroup])
+  }, [user, selectedGroup])
 
   const {
     register,
@@ -79,22 +82,22 @@ const TodoList = () => {
   } = useForm<Inputs>()
 
   const onSubmit = async (data: Inputs) => {
-    if (!selectedGroup) return
+    if (!user || !selectedGroup) return
 
-    await addDoc(collection(db, 'groups', selectedGroup, 'todos'), {
+    await addDoc(collection(db, 'groups', selectedGroup.id, 'todos'), {
       content: data.content,
       //@ts-expect-error - converting string to Timestamp
       deadline: Timestamp.fromDate(new Date(data.deadline)),
       completed: false,
       createdAt: serverTimestamp(),
-      userId: userId,
+      userId: user.uid,
     })
     reset()
   }
 
   const handleToggle = async (id: string, completed: boolean) => {
     if (!selectedGroup) return // グループが選択されていない場合は何もしない
-    const todoDocRef = doc(db, 'groups', selectedGroup, 'todos', id)
+    const todoDocRef = doc(db, 'groups', selectedGroup.id, 'todos', id)
     await updateDoc(todoDocRef, {
       completed: !completed,
     })
@@ -105,7 +108,7 @@ const TodoList = () => {
     if (!confirmDelete) return
     try {
       //@ts-expect-error - converting string to Timestamp
-      await deleteDoc(doc(db, 'groups', selectedGroup, 'todos', id))
+      await deleteDoc(doc(db, 'groups', selectedGroup.id, 'todos', id))
       setTodos(todos.filter((todo) => todo.id !== id))
     } catch (error) {
       console.error('Error removing document: ', error)

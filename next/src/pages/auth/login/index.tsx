@@ -13,6 +13,8 @@ import {
 } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import { FcGoogle } from 'react-icons/fc'
+import useAuthStore from '@/stores/authStore'
+import { FirebaseError } from 'firebase/app'
 
 type Inputs = {
   email: string
@@ -28,17 +30,26 @@ const Login = () => {
   } = useForm<Inputs>()
 
   const onSubmit = async (data: Inputs) => {
-    await signInWithEmailAndPassword(auth, data.email, data.password)
-      .then(() => {
-        router.push('/')
-      })
-      .catch((error) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password,
+      )
+      useAuthStore.getState().setUser(userCredential.user)
+      router.push('/')
+    } catch (error) {
+      if (error instanceof FirebaseError) {
         if (error.code === 'auth/invalid-credential') {
           alert('そのようなユーザは存在しません')
         } else {
           alert(error.message)
         }
-      })
+      } else {
+        // errorがFirebaseError型でない場合の処理
+        console.error('未知のエラータイプ:', error)
+      }
+    }
   }
 
   const handleGoogleLogin = async () => {
