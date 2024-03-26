@@ -25,6 +25,7 @@ const Sidebar = () => {
   const [groups, setGroups] = useState<Group[]>([])
 
   const handleLogout = () => {
+    useGroupStore.getState().setSelectedGroup(null)
     auth.signOut()
   }
 
